@@ -19,13 +19,15 @@
 -- Van Harper -- Added a WHERE commands onto tables -- 3/9/2019---------------------------------------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Fixed flaws in instantiating tables -- 3/14-2019 ------------------------------------------
+-- Van Harper -- Added times borrowed to disk has borrower table -- 3/14-2019 ------------------------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Began adding sort by commands to the Artist and Disk Name tables -- 3/15/2019 -------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Finished adding sort by commands and added a View for individual artists -- 3/16/2019 -----
+-- Van Harper -- Created view for individual artist -- 3/16/2019 -------------------------------------------
+---Van Harper -- Created select command for outstanding books -- 3/16/2019 ---------------------------------
 ------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 
 -- Drops Disk_DB and re-creates it --
@@ -113,6 +115,7 @@ create TABLE disk_has_borrower
 		borrowed_date datetime not null,	
 		expected_date datetime not null,
 		returned_date datetime null,
+		times_borrowed int null,
 		primary key (borrowed_date, disk_borrower_id, disk_id)	
 	)
 go
@@ -272,35 +275,36 @@ INSERT into [dbo].[disk_has_artist]
 		,(20, 20)				
 GO
 
+
 INSERT into [dbo].[disk_has_borrower]
-([disk_borrower_id], [disk_id], [borrowed_date], [expected_date], [returned_date])
+([disk_borrower_id], [disk_id], [borrowed_date], [expected_date], [returned_date], [times_borrowed] )
 	VALUES
-		 (1, 1, '3/4/2019', '3/18/2019', NULL)
-		,(1, 2, '3/4/2019', '3/25/2019', '3/8/2019')
-		,(3, 3, '3/5/2019', '3/26/2019', NULL)
-		,(3, 4, '3/5/2019', '3/19/2019', '3/6/2019')				
-		,(5, 5, '3/5/2019', '3/22/2019', '3/9/2019')				
-		,(6, 6, '3/5/2019', '3/19/2019', NULL)
-		,(7, 7, '3/6/2019', '3/20/2019', NULL)
-		,(8, 8, '3/6/2019', '3/20/2019', NULL)
-		,(9, 9, '3/6/2019', '3/20/2019', NULL)
-		,(10, 10, '3/6/2019', '3/20/2019', NULL)
-		,(11, 11, '3/6/2019', '3/20/2019', NULL)
-		,(12, 12, '3/6/2019', '3/27/2019', NULL)
-		,(13, 13, '3/6/2019', '3/27/2019', '3/7/2019')
-		,(14, 14, '3/6/2019', '3/20/2019', NULL)
-		,(15, 15, '3/7/2019', '3/28/2019', NULL)
-		,(17, 16, '3/7/2019', '3/21/2019', '3/8/2019')
-		,(17, 17, '3/7/2019', '3/21/2019', NULL)
-		,(18, 18, '3/7/2019', '3/28/2019', NULL)
-		,(19, 19, '3/8/2019', '3/22/2019', '3/9/2019')
-		,(21, 20, '3/8/2019', '3/22/2019', NULL)			
+		 (1, 1, '3/4/2019', '3/18/2019', NULL, 1)
+		,(1, 2, '3/4/2019', '3/25/2019', '3/8/2019', 2)
+		,(3, 3, '3/5/2019', '3/26/2019', NULL, 1)
+		,(3, 4, '3/5/2019', '3/19/2019', '3/6/2019', 1)				
+		,(5, 5, '3/5/2019', '3/22/2019', '3/9/2019', 5)				
+		,(6, 6, '3/5/2019', '3/19/2019', NULL, 4)
+		,(7, 7, '3/6/2019', '3/20/2019', NULL, 1)
+		,(8, 8, '3/6/2019', '3/20/2019', NULL, 6)
+		,(9, 9, '3/6/2019', '3/20/2019', NULL, 1)
+		,(10, 10, '3/6/2019', '3/20/2019', NULL, 1)
+		,(11, 11, '3/6/2019', '3/20/2019', NULL, 4)
+		,(12, 12, '3/6/2019', '3/27/2019', NULL, 1)
+		,(13, 13, '3/6/2019', '3/27/2019', '3/7/2019', 4)
+		,(14, 14, '3/6/2019', '3/20/2019', NULL, 1)
+		,(15, 15, '3/7/2019', '3/28/2019', NULL, 4)
+		,(17, 16, '3/7/2019', '3/21/2019', '3/8/2019', 3)
+		,(17, 17, '3/7/2019', '3/21/2019', NULL, 5)
+		,(18, 18, '3/7/2019', '3/28/2019', NULL, 1)
+		,(19, 19, '3/8/2019', '3/22/2019', '3/9/2019', 1)
+		,(21, 20, '3/8/2019', '3/22/2019', NULL, 3)			
 GO
 
--- Selects the borrowed disks that have null values --
-SELECT disk_borrower_id, disk_id, borrowed_date FROM disk_has_borrower
-	WHERE returned_date is NULL
-GO
+---- Selects the borrowed disks that have null values --
+--SELECT disk_borrower_id, disk_id, borrowed_date FROM disk_has_borrower
+--	WHERE returned_date is NULL
+--GO
 
 
 ---- Select command for DEBUGGING --
@@ -332,7 +336,46 @@ go
 USE Disk_DB
 GO
 
--- Sorts Artist table by Last Name, First Name & Disk Name --
-SELECT Artist_LName, Artist_FName, disk_name
-  FROM Artist
- ORDER BY Artist_LName, Artist_FName, disk_name
+-- Sorts and displays Artist table by Last Name Artist_FName, Artist_LName, and Disk_Name --
+SELECT Artist_FName, Artist_LName, disk_name
+  FROM Artist, compact_disk
+ WHERE disk_id = artist_id
+ ORDER BY Artist_FName, Artist_LName, disk_name
+GO
+
+ -- Creates view called View_Individual_Artist that views only individual artists --
+ CREATE VIEW View_Individual_Artist
+	AS
+		SELECT Artist_FName, Artist_LName, artist_id
+		FROM Artist
+		WHERE Artist_LName IS NOT NULL
+	GO
+
+ -- Uses the View_Individual_Artist view to display artists names, without their IDs --
+ SELECT Artist_FName, Artist_LName 
+	FROM View_Individual_Artist
+ GO
+
+  -- Uses the View_Individual_Artist view and compact_disk table, to display columns --
+ SELECT disk_name, Artist_FName, Artist_LName, release_date
+	FROM View_Individual_Artist, compact_disk
+	WHERE disk_id = artist_id
+ GO
+
+   -- Displays information about borrowed disks and their borrowers --
+ SELECT FirstName, LastName, disk_name, borrowed_date, returned_date
+	FROM disk_has_borrower, borrower, compact_disk 
+	WHERE compact_disk.disk_id = disk_borrower_id and borrower_id = disk_has_borrower.disk_id
+ GO
+
+   -- Uses the View_Individual_Artist view and compact_disk table, to display columns --
+ SELECT compact_disk.disk_id, disk_name, times_borrowed
+	 FROM disk_has_borrower, borrower, compact_disk 
+	WHERE compact_disk.disk_id = disk_borrower_id and borrower_id = disk_has_borrower.disk_id
+ GO
+
+   -- Displays all oustanding Books and the last names of the books borrowers --
+ SELECT  disk_name, borrowed_date, returned_date, LastName
+	FROM disk_has_borrower, borrower, compact_disk 
+	WHERE compact_disk.disk_id = disk_borrower_id and borrower_id = disk_has_borrower.disk_id  and returned_date IS NULL 
+ GO
