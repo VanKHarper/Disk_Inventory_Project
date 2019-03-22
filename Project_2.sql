@@ -1,3 +1,4 @@
+
 ------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------
 ---------------------------------	MODIFICATION LOGS	----------------------------------------------------
@@ -19,19 +20,33 @@
 -- Van Harper -- Added a WHERE commands onto tables -- 3/9/2019---------------------------------------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Fixed flaws in instantiating tables -- 3/14-2019 ------------------------------------------
+-- Van Harper -- Added times borrowed to disk has borrower table -- 3/14-2019 ------------------------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Began adding sort by commands to the Artist and Disk Name tables -- 3/15/2019 -------------
 ------------------------------------------------------------------------------------------------------------
 -- Van Harper -- Finished adding sort by commands and added a View for individual artists -- 3/16/2019 -----
+-- Van Harper -- Created view for individual artist -- 3/16/2019 -------------------------------------------
+-- Van Harper -- Created select command for outstanding books -- 3/16/2019 ---------------------------------
 ------------------------------------------------------------------------------------------------------------
+-- Van Harper -- Fixed logic bug with WHERE clause of a query -- 3/18/2019 ---------------------------------
+------------------------------------------------------------------------------------------------------------
+-- Van Harper -- Removed Select and Create View Statements from Project 4 -- 3/19/2019 ---------------------
+-- Van Harper -- Began adding Insert, Update, and Delete Procedures for the borrower Table -- 3/19/2019 ----
+-- Van Harper -- Began adding Insert, Update, and Delete Procedures for the artist Table -- 3/19/2019 ------
+------------------------------------------------------------------------------------------------------------
+-- Van Harper -- Finished adding Insert, Update, and Delete Procedures for the borrower Table -- 3/20/2019 -
+-- Van Harper -- Finished adding Insert, Update, and Delete Procedures for the artist Table -- 3/20/2019 ---
+------------------------------------------------------------------------------------------------------------
+-- Van Harper -- Added a Insert, Update, and Delete Procedures for the compact_disk Table -- 3/21/2019 -----
+-- Van Harper -- Fixed logic error in the Insert and Update Procedures for the artist Table -- 3/21/2019 ---
 ------------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------------
 
 
 -- Drops Disk_DB and re-creates it --
-USE master
+USE AP
 GO
-DROP DATABASE Disk_DB
+DROP DATABASE if exists Disk_DB
 GO
 CREATE DATABASE Disk_DB
 GO
@@ -113,6 +128,7 @@ create TABLE disk_has_borrower
 		borrowed_date datetime not null,	
 		expected_date datetime not null,
 		returned_date datetime null,
+		times_borrowed int null,
 		primary key (borrowed_date, disk_borrower_id, disk_id)	
 	)
 go
@@ -272,35 +288,36 @@ INSERT into [dbo].[disk_has_artist]
 		,(20, 20)				
 GO
 
+
 INSERT into [dbo].[disk_has_borrower]
-([disk_borrower_id], [disk_id], [borrowed_date], [expected_date], [returned_date])
+([disk_borrower_id], [disk_id], [borrowed_date], [expected_date], [returned_date], [times_borrowed] )
 	VALUES
-		 (1, 1, '3/4/2019', '3/18/2019', NULL)
-		,(1, 2, '3/4/2019', '3/25/2019', '3/8/2019')
-		,(3, 3, '3/5/2019', '3/26/2019', NULL)
-		,(3, 4, '3/5/2019', '3/19/2019', '3/6/2019')				
-		,(5, 5, '3/5/2019', '3/22/2019', '3/9/2019')				
-		,(6, 6, '3/5/2019', '3/19/2019', NULL)
-		,(7, 7, '3/6/2019', '3/20/2019', NULL)
-		,(8, 8, '3/6/2019', '3/20/2019', NULL)
-		,(9, 9, '3/6/2019', '3/20/2019', NULL)
-		,(10, 10, '3/6/2019', '3/20/2019', NULL)
-		,(11, 11, '3/6/2019', '3/20/2019', NULL)
-		,(12, 12, '3/6/2019', '3/27/2019', NULL)
-		,(13, 13, '3/6/2019', '3/27/2019', '3/7/2019')
-		,(14, 14, '3/6/2019', '3/20/2019', NULL)
-		,(15, 15, '3/7/2019', '3/28/2019', NULL)
-		,(17, 16, '3/7/2019', '3/21/2019', '3/8/2019')
-		,(17, 17, '3/7/2019', '3/21/2019', NULL)
-		,(18, 18, '3/7/2019', '3/28/2019', NULL)
-		,(19, 19, '3/8/2019', '3/22/2019', '3/9/2019')
-		,(21, 20, '3/8/2019', '3/22/2019', NULL)			
+		 (1, 1, '3/4/2019', '3/18/2019', NULL, 1)
+		,(1, 2, '3/4/2019', '3/25/2019', '3/8/2019', 2)
+		,(3, 3, '3/5/2019', '3/26/2019', NULL, 1)
+		,(3, 4, '3/5/2019', '3/19/2019', '3/6/2019', 1)				
+		,(5, 5, '3/5/2019', '3/22/2019', '3/9/2019', 5)				
+		,(6, 6, '3/5/2019', '3/19/2019', NULL, 4)
+		,(7, 7, '3/6/2019', '3/20/2019', NULL, 1)
+		,(8, 8, '3/6/2019', '3/20/2019', NULL, 6)
+		,(9, 9, '3/6/2019', '3/20/2019', NULL, 1)
+		,(10, 10, '3/6/2019', '3/20/2019', NULL, 1)
+		,(11, 11, '3/6/2019', '3/20/2019', NULL, 4)
+		,(12, 12, '3/6/2019', '3/27/2019', NULL, 1)
+		,(13, 13, '3/6/2019', '3/27/2019', '3/7/2019', 4)
+		,(14, 14, '3/6/2019', '3/20/2019', NULL, 1)
+		,(15, 15, '3/7/2019', '3/28/2019', NULL, 4)
+		,(17, 16, '3/7/2019', '3/21/2019', '3/8/2019', 3)
+		,(17, 17, '3/7/2019', '3/21/2019', NULL, 5)
+		,(18, 18, '3/7/2019', '3/28/2019', NULL, 1)
+		,(19, 19, '3/8/2019', '3/22/2019', '3/9/2019', 1)
+		,(21, 20, '3/8/2019', '3/22/2019', NULL, 3)			
 GO
 
--- Selects the borrowed disks that have null values --
-SELECT disk_borrower_id, disk_id, borrowed_date FROM disk_has_borrower
-	WHERE returned_date is NULL
-GO
+---- Selects the borrowed disks that have null values --
+--SELECT disk_borrower_id, disk_id, borrowed_date FROM disk_has_borrower
+--	WHERE returned_date is NULL
+--GO
 
 
 ---- Select command for DEBUGGING --
@@ -328,11 +345,280 @@ go
 	alter role db_datareader add member diskUsermm
 go
 
+
+
+
+----	PROJECT 5  ----
+
 -- Switches to Using Disk_DB --
 USE Disk_DB
 GO
 
--- Sorts Artist table by Last Name, First Name & Disk Name --
-SELECT Artist_LName, Artist_FName, disk_name
-  FROM Artist
- ORDER BY Artist_LName, Artist_FName, disk_name
+----	BORROWER TABLE	----
+
+-- Drops and re-Creates the ins_borrower Procedure --
+DROP PROCEDURE if exists ins_borrower
+GO
+
+-- Inserts a borrower into the borrower Table --
+CREATE PROCEDURE ins_borrower
+	@FirstName nvarchar(100),
+	@LastName nvarchar(100),
+	@phone_num nvarchar(50)
+AS
+
+BEGIN TRY
+	INSERT INTO [dbo].[borrower]
+		([FirstName]
+		,[LastName]
+		,[phone_num])
+	VALUES
+		(@FirstName
+		,@LastName
+		,@phone_num)
+END TRY
+
+BEGIN CATCH
+	PRINT 'An error occured.'
+	PRINT 'Message: ' + CONVERT(varchar, ERROR_MESSAGE())
+END CATCH
+GO
+
+-- Inserts the 22nd person into the borrowers Table --
+EXEC ins_borrower 'Tigger', 'Tiger', '555-123-4567'
+GO
+
+-- Drops and re-Creates the upd_borrower Procedure --
+DROP PROCEDURE IF EXISTS upd_borrower
+GO
+
+-- Upadates a borrower in the borrower Table --
+CREATE PROCEDURE upd_borrower
+	@borrower_id int,
+	@FirstName nvarchar(100),
+	@LastName nvarchar(100),
+	@phone_num nvarchar(50)
+		AS
+			BEGIN TRY
+				UPDATE [dbo].[borrower]
+					SET [FirstName] = 'Tigger'
+						,[LastName] = 'Tiger'
+						,[phone_num] = '1234567890'
+					WHERE borrower_id = @borrower_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+-- Updates the 22nd person to the borrowers Table --
+EXEC upd_borrower 22, 'Eye', 'Gor', '5555551234'
+GO
+
+
+-- Drops and re-Creates the del_borrower Procedure --
+DROP PROCEDURE IF EXISTS del_borrower
+GO
+
+-- Deletes a borrower from the borrower Table --
+CREATE PROCEDURE del_borrower
+	@borrower_id int	
+		AS
+			BEGIN TRY
+				DELETE [dbo].[borrower]					
+				WHERE borrower_id = @borrower_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+-- Deletes the 22nd borrower in the borrowers Table -- 
+EXEC del_borrower 22
+GO
+
+
+
+----	COMPACT_DISK TABLE	----
+
+-- Drops and re-Creates the ins_compact_disk Procedure --
+DROP PROCEDURE if exists ins_compact_disk
+GO
+
+-- Inserts a new disk into the compact_disk Table --
+CREATE PROCEDURE ins_compact_disk
+	@disk_id int,
+	@Disk_Status nvarchar(100),
+	@Disk_Genre nvarchar(100),
+	@Disk_Type nvarchar(100),
+	@Disk_Name nvarchar(100),
+	@release_date datetime
+AS
+		BEGIN TRY
+			INSERT INTO [dbo].[compact_disk]
+						([Disk_Status]
+						,[Disk_Genre]
+						,[Disk_Type]
+						,[disk_name]
+						,[release_date])
+			VALUES
+						(@Disk_Status,
+						@Disk_Genre,
+						@Disk_Type,
+						@Disk_Name,
+						@release_date)
+		END TRY
+
+BEGIN CATCH
+	PRINT 'An error occured.'
+	PRINT 'Message: ' + CONVERT(varchar, ERROR_MESSAGE())
+END CATCH
+GO
+
+-- Inserts the 22nd disk into the compact_disk Table --
+EXEC ins_compact_disk '1', '1', '1', '1', 'Jimmy Jazz', '3/7/2019'
+GO
+
+-- Drops and re-Creates the upd_compact_disk Procedure --
+DROP PROCEDURE IF EXISTS upd_compact_disk
+GO
+
+-- Upadates a compact_disk in the compact_disk Table --
+CREATE PROCEDURE upd_compact_disk
+	@disk_id int,
+	@Disk_Status nvarchar(100),
+	@Disk_Genre nvarchar(100),
+	@Disk_Type nvarchar(100),
+	@Disk_Name nvarchar(100),
+	@release_date datetime
+		AS
+			BEGIN TRY
+				UPDATE [dbo].[compact_disk]
+					SET  [Disk_Status] = '1'
+						,[Disk_Genre] = '2'
+						,[Disk_Type] = '2'	
+						,[disk_name] = 'Yeti Music',
+						 [release_date] = '11/12/2018'							
+					WHERE disk_id = @disk_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+ -- Updates the 22nd disk to the compact_disk Table --
+EXEC upd_compact_disk 22, '1', '1', '1', 'Jimmy Jazz', '3/7/2019'
+GO
+
+
+-- Drops and re-Creates the compact_disk Procedure --
+DROP PROCEDURE IF EXISTS del_compact_disk
+GO
+
+-- Deletes a compact_disk from the compact_disk Table --
+CREATE PROCEDURE del_compact_disk
+	@disk_id int	
+		AS
+			BEGIN TRY
+				DELETE [dbo].[compact_disk]					
+				WHERE disk_id = @disk_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+-- Deletes the 22nd disk in the compact_disk Table -- 
+EXEC del_compact_disk 22
+GO
+
+
+
+
+----	ARTIST TABLE	----
+
+-- Drops and re-Creates the ins_artists Procedure --
+DROP PROCEDURE if exists ins_artist
+GO
+
+-- Inserts a artists into the artists Table --
+CREATE PROCEDURE ins_artist	
+	@Artist_FName nvarchar(100),
+	@Artist_LName nvarchar(100),
+	@Artist_Type int
+AS
+
+BEGIN TRY
+	INSERT INTO [dbo].[artist]
+		([Artist_FName]
+		,[Artist_LName]
+		,[Artist_Type])	
+	VALUES
+
+		(@Artist_FName
+		,@Artist_LName
+		,@Artist_Type)
+END TRY
+
+BEGIN CATCH
+	PRINT 'An error occured.'
+	PRINT 'Message: ' + CONVERT(varchar, ERROR_MESSAGE())
+END CATCH
+GO
+
+-- Inserts the 21st person into the artists Table --
+EXEC ins_artist 'Timmy', 'Tommy', '1'
+GO
+
+-- Drops and re-Creates the upd_artist Procedure --
+DROP PROCEDURE IF EXISTS upd_artist
+GO
+
+-- Upadates a artist in the artist Table --
+CREATE PROCEDURE upd_artist
+	@artist_id int,
+	@Artist_FName nvarchar(100),
+	@Artist_LName nvarchar(100)
+		AS
+			BEGIN TRY
+				UPDATE [dbo].[artist]
+					SET [Artist_FName] = 'Franky'
+						,[Artist_LName] = 'Doo-Da'						
+					WHERE artist_id = @artist_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+-- Updates the 21st person to the artist Table --
+EXEC upd_artist 21, 'Timmy', 'Tommy'
+GO
+
+
+-- Drops and re-Creates the artist Procedure --
+DROP PROCEDURE IF EXISTS del_artist
+GO
+
+-- Deletes a artist from the artist Table --
+CREATE PROCEDURE del_artist
+	@artist_id int	
+		AS
+			BEGIN TRY
+				DELETE [dbo].[artist]					
+				WHERE artist_id = @artist_id
+			END TRY
+		BEGIN CATCH
+			PRINT 'An error occured'
+			PRINT 'Message: ' + CONVERT(varchar(200), Error_Message())
+		END Catch
+GO
+
+-- Deletes the 21st artist in the artist Table -- 
+EXEC del_artist 21
+GO
